@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Blocked Control</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+<style>
+body {
+  font-family: "Segoe UI", Arial;
+  background: #eef1f5;
+  margin: 0;
+}
+
+.header {
+  background: #003DA5;
+  color: white;
+  padding: 15px 30px;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 20px auto;
+}
+
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* FORM */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr auto;
+  gap: 15px;
+  align-items: end;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+input, textarea {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  height: 40px;
+}
+
+textarea {
+  resize: none;
+}
+
+button {
+  height: 40px;
+  padding: 0 20px;
+  background: #003DA5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #002a7a;
+}
+
+/* KPI */
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-left: 6px solid #FFCC00;
+}
+
+.kpi-icon {
+  font-size: 30px;
+  background: #003DA5;
+  color: white;
+  padding: 15px;
+  border-radius: 50%;
+}
+
+.kpi-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #003DA5;
+}
+
+/* TITLES */
+.section-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* CHART BUTTON */
+.chart-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.export-chart {
+  background: #FFCC00;
+  color: black;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #003DA5;
+  color: white;
+  padding: 10px;
+}
+
+td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.action-btn {
+  border: none;
+  padding: 5px 8px;
+  margin: 2px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.edit { background: #FFCC00; }
+.delete { background: #ff4d4d; color: white; }
+
+/* BOTÃO EXPORTAÇÃO FIXADO */
+.table-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.export {
+  background: #FFCC00;
+  color: black;
+}
+
+/* CHART SIZE */
+canvas {
+  height: 300px !important;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">📊 BLOCKED CONTROL</div>
+
+<div class="container">
+
+  <!-- FORM -->
+  <div class="card">
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Data</label>
+        <input type="date" id="data">
+      </div>
+
+      <div class="form-group">
+        <label>Quantidade</label>
+        <input type="number" id="quantidade">
+      </div>
+
+      <div class="form-group">
+        <label>Observação</label>
+        <textarea id="obs"></textarea>
+      </div>
+
+      <button onclick="salvarDados()">SALVAR</button>
+
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="card kpi-card">
+    <div class="kpi-icon">📦</div>
+    <div>
+      <div>Inventário bloqueado atualmente</div>
+      <div class="kpi-value" id="total">0</div>
+      <small id="dataKPI"></small>
+    </div>
+  </div>
+
+  <!-- GRAFICO -->
+  <div class="card">
+    <div class="section-title">📊 CAIXAS BLOQUEADAS POR DIA</div>
+
+    <div class="chart-actions">
+      <button class="export-chart" onclick="baixarGrafico()">📥 Baixar Gráfico</button>
+    </div>
+
+    <canvas id="grafico"></canvas>
+  </div>
+
+  <!-- TABELA -->
+  <div class="card">
+    <div class="section-title">📋 REGISTROS</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Quantidade</th>
+          <th>Observação</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabela"></tbody>
+    </table>
+
+    <div class="table-actions">
+      <button class="export" onclick="baixarExcel()">📥 Exportar Excel</button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+let dados = JSON.parse(localStorage.getItem("dados")) || [];
+let editIndex = null;
+
+function salvarDados() {
+  const data = dataInput.value;
+  const quantidade = Number(quantidadeInput.value);
+  const obs = obsInput.value;
+
+  if (!data || !quantidade) return alert("Preencha os campos!");
+
+  if (editIndex !== null) {
+    dados[editIndex] = { data, quantidade, obs };
+    editIndex = null;
+  } else {
+    dados.push({ data, quantidade, obs });
+  }
+
+  limpar();
+  salvarLocal();
+}
+
+function limpar() {
+  dataInput.value = "";
+  quantidadeInput.value = "";
+  obsInput.value = "";
+}
+
+function editar(i) {
+  const d = dados[i];
+  dataInput.value = d.data;
+  quantidadeInput.value = d.quantidade;
+  obsInput.value = d.obs;
+  editIndex = i;
+}
+
+function excluir(i) {
+  if (confirm("Excluir registro?")) {
+    dados.splice(i,1);
+    salvarLocal();
+  }
+}
+
+function salvarLocal() {
+  localStorage.setItem("dados", JSON.stringify(dados));
+  atualizarTela();
+}
+
+function ordenar() {
+  dados.sort((a,b)=> new Date(a.data) - new Date(b.data));
+}
+
+function atualizarKPI() {
+  if (!dados.length) return;
+  const ultimo = dados[dados.length - 1];
+  total.innerText = ultimo.quantidade;
+  dataKPI.innerText = ultimo.data;
+}
+
+function atualizarTabela() {
+  tabela.innerHTML = "";
+  dados.forEach((d,i)=>{
+    tabela.innerHTML += `
+      <tr>
+        <td>${d.data}</td>
+        <td>${d.quantidade}</td>
+        <td>${d.obs}</td>
+        <td>
+          <button class="action-btn edit" onclick="editar(${i})">✏️</button>
+          <button class="action-btn delete" onclick="excluir(${i})">🗑️</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+let chart;
+
+function atualizarGrafico() {
+  const labels = dados.map(d=>d.data);
+  const valores = dados.map(d=>d.quantidade);
+
+  if(chart) chart.destroy();
+
+  chart = new Chart(grafico, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        data: valores,
+        backgroundColor: "#003DA5",
+        borderRadius: 6,
+        barThickness: 40
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          anchor: 'end',
+          align: 'top',
+          font: { weight: 'bold' }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+/* EXPORTAR GRÁFICO */
+function baixarGrafico() {
+  const url = chart.toBase64Image();
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "grafico.png";
+  a.click();
+}
+
+/* EXCEL */
+function baixarExcel() {
+  let html = `<table><tr><th>Data</th><th>Qtd</th><th>Obs</th></tr>`;
+  dados.forEach(d=>{
+    html += `<tr><td>${d.data}</td><td>${d.quantidade}</td><td>${d.obs}</td></tr>`;
+  });
+  html += "</table>";
+
+  const blob = new Blob([html], {type:"application/vnd.ms-excel"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "blocked.xls";
+  a.click();
+}
+
+function atualizarTela() {
+  ordenar();
+  atualizarKPI();
+  atualizarTabela();
+  atualizarGrafico();
+}
+
+const dataInput = document.getElementById("data");
+const quantidadeInput = document.getElementById("quantidade");
+const obsInput = document.getElementById("obs");
+const tabela = document.getElementById("tabela");
+const total = document.getElementById("total");
+const dataKPI = document.getElementById("dataKPI");
+const grafico = document.getElementById("grafico");
+
+atualizarTela();
+</script>
+
+</body>
+</html>
