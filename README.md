@@ -19,12 +19,12 @@ Este projeto transforma dados operacionais em um dashboard simples, visual , efi
 
 🛠️ Tecnologias Utilizadas
 
-HTML
-CSS
-JavaScript
-Chart.js
+- HTML
+- CSS
+- JavaScript
+- Chart.js
 
-🌐 Acesso ao Projeto
+🔗 [Acessar Dashboard]
 
 👉 https://blocked-control.netlify.app/
 
