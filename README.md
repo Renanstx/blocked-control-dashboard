@@ -1,4 +1,4 @@
-📊 BLOCKED CONTROL
+📊 Inventory Insight Dashboard
 
 Ferramenta desenvolvida para controle e visualização de inventário bloqueado, transformando registros operacionais e analises em informação clara para acompanhamento e tomada de decisão.
 
