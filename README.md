@@ -11,7 +11,7 @@ Edição e exclusão de registros /
 Exportação de dados em Excel /
 Exportação do gráfico em imagem (PNG)
 
-💡 Problema Resolvido
+💡 Proposta
 
 Em muitos processos logísticos, o controle de inventário bloqueado não tem facil visibilidade.
 
