@@ -26,7 +26,8 @@ Este projeto transforma dados operacionais em um dashboard simples, visual , efi
 
 🔗 [Acessar Dashboard]
 
-👉 https://blocked-control.netlify.app/
+👉 https://dashboard-blocked.netlify.app/
 
-<img width="1240" height="1344" alt="image" src="https://github.com/user-attachments/assets/577adcb4-d6bb-48d4-bb3f-c5ec7d14f9ea" />
+<img width="1240" height="1467" alt="image" src="https://github.com/user-attachments/assets/8066bab2-027b-4ae4-bdcb-bfdf6d5fc417" />
+
 
